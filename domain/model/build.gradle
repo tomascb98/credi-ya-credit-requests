@@ -1,0 +1,10 @@
+dependencies {
+    // Testing dependencies - usando las mismas versiones que el proyecto principal
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}

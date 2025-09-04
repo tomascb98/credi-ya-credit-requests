@@ -1,0 +1,35 @@
+# Este archivo no es necesario si usas la base de datos existente del proyecto de autenticación
+# Solo necesitas ejecutar el script SQL para crear el esquema 'credit'
+
+# Para usar la base de datos existente:
+# 1. Asegúrate de que la BD del proyecto de autenticación esté corriendo
+# 2. Ejecuta el script SQL: docker exec -i db-portalpagos psql -U appuser -d crediya < db/init/docker-entrypoint-initdb.sql
+
+# Si prefieres instancias separadas, descomenta el docker-compose de abajo y cambia los puertos
+
+# version: '3.8'
+# 
+# services:
+#   db-credit-requests:
+#     image: postgres:15
+#     container_name: db-credit-requests
+#     restart: always
+#     environment:
+#       POSTGRES_USER: appuser
+#       POSTGRES_PASSWORD: appsecret
+#       POSTGRES_DB: crediya
+#     ports:
+#       - "5433:5432"  # Puerto diferente para evitar conflictos
+#     volumes:
+#       - postgres_credit_data:/var/lib/postgresql/data
+#       - ./db/init:/docker-entrypoint-initdb.d
+#     networks:
+#       - postgres-credit-network
+# 
+# volumes:
+#   postgres_credit_data:
+#     driver: local
+# 
+# networks:
+#   postgres-credit-network:
+#     driver: bridge

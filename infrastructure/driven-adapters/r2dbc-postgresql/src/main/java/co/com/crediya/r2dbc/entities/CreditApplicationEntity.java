@@ -16,10 +16,10 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "credit-applications", schema = "applications")
+@Table(name = "credit_applications", schema = "credit")
 public class CreditApplicationEntity {
     @Id
-    @Column("credit_application_id")
+    @Column("id")
     private UUID id;
 
     private BigDecimal amount;

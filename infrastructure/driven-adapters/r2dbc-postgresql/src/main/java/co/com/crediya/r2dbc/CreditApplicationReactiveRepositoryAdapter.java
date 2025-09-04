@@ -6,13 +6,17 @@ import co.com.crediya.model.loantype.LoanType;
 import co.com.crediya.model.requeststate.RequestState;
 import co.com.crediya.r2dbc.entities.CreditApplicationEntity;
 import co.com.crediya.r2dbc.helper.ReactiveAdapterOperations;
+import lombok.extern.slf4j.Slf4j;
 import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
 @Repository
+@Slf4j
+@Transactional
 public class CreditApplicationReactiveRepositoryAdapter extends ReactiveAdapterOperations<
         CreditApplication/* change for domain model */,
         CreditApplicationEntity/* change for adapter model */,
@@ -30,15 +34,27 @@ public class CreditApplicationReactiveRepositoryAdapter extends ReactiveAdapterO
 
     @Override
     public Mono<CreditApplication> createCreditApplication(CreditApplication creditApplication) {
+        log.info("Iniciando persistencia de solicitud de crédito");
+        
         CreditApplicationEntity creditApplicationEntity = mapper.map(creditApplication, CreditApplicationEntity.class);
         creditApplicationEntity.setLoanTypeId(creditApplication.getLoanType().getId());
         creditApplicationEntity.setRequestStateId(creditApplication.getRequestState().getId());
+        
+        log.debug("Entidad mapeada: loanTypeId={}, requestStateId={}", 
+            creditApplicationEntity.getLoanTypeId(), creditApplicationEntity.getRequestStateId());
+        
         return repository
                 .save(creditApplicationEntity)
+                .doOnNext(entity -> log.info("Solicitud de crédito persistida en BD exitosamente"))
                 .map(creditApplicationEntitySaved -> {
                     CreditApplication creditApplicationSaved = mapper.map(creditApplicationEntitySaved, CreditApplication.class);
-                    creditApplicationSaved.setLoanType(LoanType.builder().id(creditApplicationEntitySaved.getLoanTypeId()).build());
-                    creditApplicationSaved.setRequestState(RequestState.builder().id(creditApplicationEntitySaved.getRequestStateId()).build());
+                    creditApplicationSaved.setLoanType(creditApplication.getLoanType());
+                    creditApplicationSaved.setRequestState(creditApplication.getRequestState());
+                    
+                    log.debug("Objeto de dominio reconstruido: loanType={}, requestState={}", 
+                        creditApplicationSaved.getLoanType().getName(), 
+                        creditApplicationSaved.getRequestState().getName());
+                    
                     return creditApplicationSaved;
                 });
     }
