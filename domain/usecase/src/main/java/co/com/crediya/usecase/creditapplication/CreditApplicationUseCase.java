@@ -20,7 +20,7 @@ public class CreditApplicationUseCase {
         this.loanTypeRepository = loanTypeRepository;
     }
 
-    public Mono<CreditApplication> createCreditApplication(CreditApplication creditApplication) {
-        return CreditApplicationValidatorHelper.validateAndSaveCreditApplication(creditApplication, creditApplicationRepository, userService, loanTypeRepository);
+    public Mono<CreditApplication> createCreditApplication(CreditApplication creditApplication, String jwtToken) {
+        return CreditApplicationValidatorHelper.validateAndSaveCreditApplication(creditApplication, jwtToken, creditApplicationRepository, userService, loanTypeRepository);
     }
 }

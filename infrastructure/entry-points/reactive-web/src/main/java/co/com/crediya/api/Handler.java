@@ -11,6 +11,7 @@ import co.com.crediya.model.exceptions.ValidationException;
 import co.com.crediya.usecase.creditapplication.CreditApplicationUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -34,7 +35,7 @@ public class Handler {
                     dto.loanTypeName(), dto.monthTerm()))
                 .flatMap(createCreditApplicationRequestDto -> {
                     log.info("Mapeando DTO a entidad de dominio");
-                    return creditApplicationUseCase.createCreditApplication(mapper.mapToEntity(createCreditApplicationRequestDto));
+                    return creditApplicationUseCase.createCreditApplication(mapper.mapToEntity(createCreditApplicationRequestDto), request.headers().firstHeader(HttpHeaders.AUTHORIZATION));
                 })
                 .doOnNext(creditApplication -> log.info("Solicitud de crédito creada exitosamente"))
                 .map(mapper::mapToResponseDto)

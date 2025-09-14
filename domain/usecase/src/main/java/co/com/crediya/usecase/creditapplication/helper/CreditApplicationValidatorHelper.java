@@ -11,11 +11,12 @@ import reactor.core.publisher.Mono;
 
 public class CreditApplicationValidatorHelper {
     public static Mono<CreditApplication> validateAndSaveCreditApplication(CreditApplication creditApplication,
+                                                                           String jwtToken,
                                                                            CreditApplicationRepository creditApplicationRepository,
                                                                            UserService userService,
                                                                            LoanTypeRepository loanTypeRepository) {
         return validateRequiredFields(creditApplication)
-                .flatMap(validatedApplication -> validateExistanceUser(validatedApplication.getDocumentNumber(), userService, validatedApplication))
+                .flatMap(validatedApplication -> validateExistanceUser(validatedApplication.getDocumentNumber(), jwtToken, userService, validatedApplication))
                 .flatMap(validatedApplication -> validateAndCompleteLoanType(validatedApplication.getLoanType().getName(), loanTypeRepository, validatedApplication))
                 .flatMap(validatedApplication -> setInitialRequestState(validatedApplication))
                 .flatMap(creditApplicationRepository::createCreditApplication);
@@ -41,8 +42,8 @@ public class CreditApplicationValidatorHelper {
         return s == null || s.trim().isEmpty();
     }
 
-    private static Mono<CreditApplication> validateExistanceUser(String documentNumber, UserService userService, CreditApplication creditApplication) {
-        return userService.validateUser(documentNumber)
+    private static Mono<CreditApplication> validateExistanceUser(String documentNumber, String jwtToken, UserService userService, CreditApplication creditApplication) {
+        return userService.validateUser(documentNumber, jwtToken)
                 .flatMap(isValid -> isValid 
                     ? Mono.just(creditApplication)
                     : Mono.error(new UserNotFoundException("El usuario no se encuentra registrado en el sistema."))
