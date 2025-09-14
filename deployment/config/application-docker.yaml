@@ -1,0 +1,36 @@
+adapters:
+  r2dbc:
+    host: ${DB_HOST:postgres}
+    port: ${DB_PORT:5432}
+    database: ${DB_NAME:crediya}
+    schema: ${DB_SCHEMA:credit}
+    username: ${DB_USER:appuser}
+    password: ${DB_PASS:appsecret}
+
+cors:
+  allowed-origins: ${ALLOWED_CORS_CREDIT:*}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      validateUser:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info"
+
+# Configuración para llamar al micro de auth desde dentro de la red docker
+adapter:
+  restconsumer:
+    timeout: 5000
+    url: ${AUTH_BASE_URL:http://authentication:8080}
