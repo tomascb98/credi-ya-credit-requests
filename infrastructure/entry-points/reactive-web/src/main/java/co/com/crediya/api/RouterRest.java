@@ -19,6 +19,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import co.com.crediya.api.dto.CreateCreditApplicationRequestDto;
 import co.com.crediya.api.dto.CreateCreditApplicationResponseDto;
 import co.com.crediya.api.dto.ErrorResponseDto;
+import co.com.crediya.usecase.creditapplication.dto.PaginatedCreditApplicationsDto;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
@@ -94,8 +95,83 @@ public class RouterRest {
                             }
                     )
             ),
+            @RouterOperation(
+                    path = "/creditApplication",
+                    method = RequestMethod.GET,
+                    beanClass = Handler.class,
+                    beanMethod = "getCreditApplications",
+                    operation = @Operation(
+                            operationId = "getCreditApplications",
+                            summary = "Consultar solicitudes de crédito",
+                            description = "Obtiene una lista paginada de solicitudes de crédito con información del usuario y cálculo de cuota mensual",
+                            tags = {"Solicitudes de Crédito"},
+                            parameters = {
+                                    @Parameter(
+                                            name = "state",
+                                            description = "Estado de la solicitud (PENDIENTE, APROBADA, RECHAZADA)",
+                                            in = ParameterIn.QUERY,
+                                            schema = @Schema(type = "string", example = "PENDIENTE")
+                                    ),
+                                    @Parameter(
+                                            name = "page",
+                                            description = "Número de página (mínimo 1)",
+                                            in = ParameterIn.QUERY,
+                                            schema = @Schema(type = "integer", example = "1", minimum = "1")
+                                    ),
+                                    @Parameter(
+                                            name = "pageSize",
+                                            description = "Tamaño de página (entre 1 y 100)",
+                                            in = ParameterIn.QUERY,
+                                            schema = @Schema(type = "integer", example = "10", minimum = "1", maximum = "100")
+                                    )
+                            },
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "200",
+                                            description = "Lista de solicitudes de crédito obtenida exitosamente",
+                                            content = @Content(
+                                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                                    schema = @Schema(implementation = PaginatedCreditApplicationsDto.class)
+                                            )
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "400",
+                                            description = "Parámetros de consulta inválidos",
+                                            content = @Content(
+                                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                                    schema = @Schema(implementation = ErrorResponseDto.class)
+                                            )
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "401",
+                                            description = "Token de autenticación inválido o expirado",
+                                            content = @Content(
+                                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                                    schema = @Schema(implementation = ErrorResponseDto.class)
+                                            )
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "403",
+                                            description = "No tiene permisos para acceder a este recurso",
+                                            content = @Content(
+                                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                                    schema = @Schema(implementation = ErrorResponseDto.class)
+                                            )
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "500",
+                                            description = "Error interno del servidor",
+                                            content = @Content(
+                                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                                    schema = @Schema(implementation = ErrorResponseDto.class)
+                                            )
+                                    )
+                            }
+                    )
+            )
     })
     public RouterFunction<ServerResponse> routerFunction(Handler handler) {
-        return route(POST(creditApplicationPath + "/createApplication"), handler::createCreditApplication);
+        return route(POST(creditApplicationPath + "/createApplication"), handler::createCreditApplication)
+                .andRoute(GET(creditApplicationPath + "/creditApplication"), handler::getCreditApplications);
     }
 }

@@ -4,4 +4,5 @@ import reactor.core.publisher.Mono;
 
 public interface UserService {
     Mono<Boolean> validateUser(String documentNumber, String jwtToken);
+    Mono<UserModel[]> findUsersByDocumentNumber(String jwtToken, String[] documentNumbers);
 }
