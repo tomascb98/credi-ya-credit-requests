@@ -1,6 +1,8 @@
 package co.com.crediya.api.advisor;
 
 import co.com.crediya.api.dto.ErrorResponseDto;
+import co.com.crediya.model.exceptions.AuthenticationException;
+import co.com.crediya.model.exceptions.AuthorizationException;
 import co.com.crediya.model.exceptions.BusinessRuleException;
 import co.com.crediya.model.exceptions.UserNotFoundException;
 import co.com.crediya.model.exceptions.ValidationException;
@@ -51,6 +53,26 @@ public class GlobalExceptionHandler {
                         "Formato de datos inválido",
                         "INVALID_FORMAT",
                         HttpStatus.BAD_REQUEST.value()
+                ));
+    }
+
+    public Mono<ServerResponse> handleAuthenticationException(AuthenticationException ex) {
+        log.warn("Authentication error: {}", ex.getMessage());
+        return ServerResponse.status(HttpStatus.UNAUTHORIZED)
+                .bodyValue(ErrorResponseDto.of(
+                        ex.getMessage() != null ? ex.getMessage() : "Token de autenticación inválido o expirado",
+                        "UNAUTHORIZED",
+                        HttpStatus.UNAUTHORIZED.value()
+                ));
+    }
+
+    public Mono<ServerResponse> handleAuthorizationException(AuthorizationException ex) {
+        log.warn("Authorization error: {}", ex.getMessage());
+        return ServerResponse.status(HttpStatus.FORBIDDEN)
+                .bodyValue(ErrorResponseDto.of(
+                        ex.getMessage() != null ? ex.getMessage() : "No tiene permisos para acceder a este recurso",
+                        "FORBIDDEN",
+                        HttpStatus.FORBIDDEN.value()
                 ));
     }
 

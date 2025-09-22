@@ -11,6 +11,20 @@ spring:
       enabled: true
       path: "/h2"
 
+adapters:
+  r2dbc:
+    host: localhost
+    port: 5432
+    database: crediya
+    schema: credit
+    username: appuser
+    password: appsecret
+
+adapter:
+  restconsumer:
+    timeout: 5000
+    url: http://localhost:8080
+
 management:
   endpoints:
     web:
