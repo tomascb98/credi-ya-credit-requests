@@ -7,4 +7,5 @@ public interface LoanTypeRepository {
     Mono<LoanType> findById(String id);
     Mono<Boolean> existsByName(String name);
     Mono<LoanType> findByName(String name);
+    Mono<Boolean> hasAutomaticValidation(Integer loanTypeId);
 }
