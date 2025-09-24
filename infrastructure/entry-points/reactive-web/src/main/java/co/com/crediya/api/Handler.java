@@ -3,6 +3,10 @@ package co.com.crediya.api;
 import co.com.crediya.api.advisor.GlobalExceptionHandler;
 import co.com.crediya.api.dto.CreateCreditApplicationRequestDto;
 import co.com.crediya.api.dto.ErrorResponseDto;
+import co.com.crediya.api.dto.UpdateApplicationStatusRequestDto;
+import co.com.crediya.api.dto.UpdateApplicationStatusResponseDto;
+import co.com.crediya.api.dto.CalculateCapacityRequestDto;
+import co.com.crediya.api.dto.CalculateCapacityResponseDto;
 import co.com.crediya.api.mapper.CreditApplicationDtoMapper;
 import co.com.crediya.model.exceptions.AuthenticationException;
 import co.com.crediya.model.exceptions.AuthorizationException;
@@ -18,6 +22,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -94,6 +100,92 @@ public class Handler {
         .onErrorResume(BusinessRuleException.class, exceptionHandler::handleBusinessRuleException)
         .onErrorResume(UserNotFoundException.class, exceptionHandler::handleUserNotFoundException)
         .onErrorResume(Exception.class, exceptionHandler::handleGenericException);
+    }
+
+    public Mono<ServerResponse> updateApplicationStatus(ServerRequest request) {
+        String applicationId = request.pathVariable("id");
+        String jwtToken = request.headers().firstHeader(HttpHeaders.AUTHORIZATION);
+        
+        log.info("Actualizando estado de solicitud: applicationId={}", applicationId);
+        
+        return request.bodyToMono(UpdateApplicationStatusRequestDto.class)
+                .flatMap(updateRequest -> 
+                    creditApplicationUseCase.updateApplicationStatus(
+                            UUID.fromString(applicationId), 
+                            updateRequest.statusId(), 
+                            updateRequest.reason()
+                    )
+                    .map(updatedApplication -> {
+                        // Mapear el estado ID a nombre
+                        String statusName = updatedApplication.getRequestState() != null ? 
+                                updatedApplication.getRequestState().getName() : "PENDIENTE";
+                        
+                        return new UpdateApplicationStatusResponseDto(
+                                updatedApplication.getId(),
+                                "Estado actualizado exitosamente",
+                                statusName,
+                                updateRequest.reason()
+                        );
+                    })
+                )
+                .flatMap(response -> ServerResponse.ok().bodyValue(response))
+                .onErrorResume(IllegalArgumentException.class, ex -> {
+                    log.warn("ID de solicitud inválido: {}", ex.getMessage());
+                    return ServerResponse.badRequest()
+                            .bodyValue(ErrorResponseDto.of(
+                                    "ID de solicitud inválido",
+                                    "INVALID_APPLICATION_ID",
+                                    HttpStatus.BAD_REQUEST.value()
+                            ));
+                })
+                .onErrorResume(AuthenticationException.class, exceptionHandler::handleAuthenticationException)
+                .onErrorResume(AuthorizationException.class, exceptionHandler::handleAuthorizationException)
+                .onErrorResume(ValidationException.class, exceptionHandler::handleValidationException)
+                .onErrorResume(BusinessRuleException.class, exceptionHandler::handleBusinessRuleException)
+                .onErrorResume(UserNotFoundException.class, exceptionHandler::handleUserNotFoundException)
+                .onErrorResume(Exception.class, exceptionHandler::handleGenericException);
+    }
+
+    public Mono<ServerResponse> calculateCapacity(ServerRequest request) {
+        String jwtToken = request.headers().firstHeader(HttpHeaders.AUTHORIZATION);
+        
+        log.info("Iniciando cálculo de capacidad de endeudamiento");
+        
+        return request.bodyToMono(CalculateCapacityRequestDto.class)
+                .flatMap(calculateRequest -> 
+                    creditApplicationUseCase.calculateCapacity(
+                            calculateRequest.documentNumber(),
+                            calculateRequest.requestedAmount(),
+                            calculateRequest.monthTerm(),
+                            calculateRequest.loanTypeId(),
+                            jwtToken
+                    )
+                    .map(applicationId -> {
+                        String traceId = "trace-" + UUID.randomUUID().toString().substring(0, 8);
+                        return new CalculateCapacityResponseDto(
+                                applicationId,
+                                "Solicitud de cálculo enviada exitosamente",
+                                "PENDIENTE",
+                                traceId
+                        );
+                    })
+                )
+                .flatMap(response -> ServerResponse.ok().bodyValue(response))
+                .onErrorResume(IllegalArgumentException.class, ex -> {
+                    log.warn("Datos de solicitud inválidos: {}", ex.getMessage());
+                    return ServerResponse.badRequest()
+                            .bodyValue(ErrorResponseDto.of(
+                                    "Datos de solicitud inválidos",
+                                    "INVALID_REQUEST_DATA",
+                                    HttpStatus.BAD_REQUEST.value()
+                            ));
+                })
+                .onErrorResume(AuthenticationException.class, exceptionHandler::handleAuthenticationException)
+                .onErrorResume(AuthorizationException.class, exceptionHandler::handleAuthorizationException)
+                .onErrorResume(ValidationException.class, exceptionHandler::handleValidationException)
+                .onErrorResume(BusinessRuleException.class, exceptionHandler::handleBusinessRuleException)
+                .onErrorResume(UserNotFoundException.class, exceptionHandler::handleUserNotFoundException)
+                .onErrorResume(Exception.class, exceptionHandler::handleGenericException);
     }
     
     // Clase interna para encapsular parámetros de consulta

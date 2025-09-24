@@ -36,4 +36,10 @@ public class LoanTypeReactiveRepositoryAdapter implements LoanTypeRepository {
                 .map(mapperHelper::toLoanType)
                 .doOnNext(loanType -> log.info("Tipo de préstamo validado: name={}", loanType.getName()));
     }
+
+    @Override
+    public Mono<Boolean> hasAutomaticValidation(Integer loanTypeId) {
+        return loanTypeReactiveRepository.findAutomaticValidationByLoanTypeId(loanTypeId)
+                .doOnError(error -> log.error("Error verificando validación automática para loanTypeId={}: {}", loanTypeId, error.getMessage()));
+    }
 }

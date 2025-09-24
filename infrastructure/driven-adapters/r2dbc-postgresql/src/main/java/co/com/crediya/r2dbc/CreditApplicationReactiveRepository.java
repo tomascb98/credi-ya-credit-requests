@@ -35,4 +35,26 @@ public interface CreditApplicationReactiveRepository extends ReactiveCrudReposit
         AND ($1 IS NULL OR $1 != 'APROBADA' OR rs.name != 'APROBADA')
         """)
     Mono<Long> countCreditApplicationsWithFilter(String filter);
+
+    @Query("""
+        UPDATE credit.credit_applications
+        SET request_state_id = $2, updated_at = NOW()
+        WHERE id = $1
+        """)
+    Mono<Integer> updateApplicationStatus(UUID applicationId, Integer statusId);
+
+    @Query("""
+        SELECT
+          ca.id, ca.amount, ca.month_term, ca.email, ca.document_number,
+          ca.loan_type_id, ca.request_state_id,
+          lt.id AS lt_id, lt.name AS lt_name, lt.minimum_amount, lt.maximum_amount,
+          lt.interest_rate, lt.automatic_validation,
+          rs.id AS rs_id, rs.name AS rs_name, rs.description
+        FROM credit.credit_applications ca
+        INNER JOIN credit.loan_types lt ON ca.loan_type_id = lt.id
+        INNER JOIN credit.request_states rs ON ca.request_state_id = rs.id
+        WHERE ca.document_number = $1 AND rs.name = 'APROBADA'
+        ORDER BY ca.created_at DESC
+        """)
+    Flux<CreditApplicationWithJoinsDto> findActiveLoansByDocumentNumber(String documentNumber);
 }

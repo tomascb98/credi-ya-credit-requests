@@ -1,6 +1,7 @@
 package co.com.crediya.r2dbc;
 
 import co.com.crediya.r2dbc.entities.LoanTypeEntity;
+import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -22,4 +23,10 @@ public interface LoanTypeReactiveRepository extends ReactiveCrudRepository<LoanT
      * Busca un tipo de préstamo por nombre
      */
     Mono<LoanTypeEntity> findByName(String name);
+    
+    /**
+     * Verifica si un tipo de préstamo tiene validación automática
+     */
+    @Query("SELECT automatic_validation FROM credit.loan_types WHERE id = $1")
+    Mono<Boolean> findAutomaticValidationByLoanTypeId(Integer loanTypeId);
 }
